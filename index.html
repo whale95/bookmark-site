@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人导航站</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LG49RFN4DM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-LG49RFN4DM');
+    </script>
+    
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -340,6 +351,50 @@
             color: var(--text-color);
             font-size: 1rem;
         }
+
+        /* 在样式表中添加 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 移动设备适配 */
+        @media (max-width: 768px) {
+            .back-to-top {
+                width: 40px;
+                height: 40px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 1.2rem;
+            }
+        }
     </style>
 </head>
 <body class="light-mode">
@@ -504,6 +559,10 @@
     <footer>
         <p>© 2025 个人导航站 | 收集整理了各类实用工具和资源</p>
     </footer>
+
+    <button id="backToTop" class="back-to-top" title="返回顶部">
+        <span>↑</span>
+    </button>
 
     <script>
         // 搜索功能增强
@@ -772,11 +831,54 @@
         // 导航栏激活状态
         const navItems = document.querySelectorAll('.nav-item');
         
-        // 点击导航项时添加激活状态
+        // 修改导航项点击事件处理
         navItems.forEach(item => {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                // 获取目标分类ID
+                const targetId = this.getAttribute('href').substring(1);
+                const targetCategory = document.getElementById(targetId);
+                
+                // 如果处于搜索模式，需要先清除搜索状态
+                if (document.querySelector('.container').classList.contains('search-active')) {
+                    // 清空搜索框
+                    searchBox.value = '';
+                    
+                    // 重置搜索状态（显示所有分类和链接）
+                    const container = document.querySelector('.container');
+                    const noResultsMessage = document.getElementById('noResultsMessage');
+                    
+                    container.classList.remove('search-active');
+                    noResultsMessage.style.display = 'none';
+                    
+                    // 显示所有分类和链接
+                    categories.forEach(category => {
+                        category.style.display = 'block';
+                        // 显示所有子元素
+                        const headers = category.querySelectorAll('.category-header, .subcategory-header');
+                        headers.forEach(header => {
+                            header.innerHTML = header.textContent;
+                            header.style.display = 'block';
+                        });
+                    });
+                    
+                    // 显示所有链接项
+                    linkItems.forEach(item => {
+                        const link = item.querySelector('a');
+                        link.innerHTML = link.textContent;
+                        item.style.display = 'block';
+                        item.removeAttribute('data-visible');
+                    });
+                }
+                
+                // 更新导航栏激活状态
                 navItems.forEach(nav => nav.classList.remove('active'));
                 this.classList.add('active');
+                
+                // 确保目标分类可见
+                if (targetCategory) {
+                    // 滚动到目标分类
+                    targetCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             });
         });
 
@@ -812,6 +914,25 @@
             }
             
             updateActiveNavItemByScroll();
+        });
+
+        // 返回顶部按钮功能
+        const backToTopButton = document.getElementById('backToTop');
+
+        // 监听滚动事件，控制按钮显示/隐藏
+        window.addEventListener('scroll', function() {
+            // 当页面滚动超过300px时显示按钮
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+        });
+
+        // 点击按钮返回顶部
+        backToTopButton.addEventListener('click', function() {
+            // 即时滚动到顶部
+            window.scrollTo(0, 0);
         });
     </script>
 </body>
