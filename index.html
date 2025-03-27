@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人导航站</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --bg-color: #1e1e2a; /* 更深的背景色，类似截图 */
+            --card-bg: #2a2a3a; /* 卡片背景色 */
+            --text-color: #e0e0e0; /* 浅色文本 */
+            --border-color: #444444;
+            --hover-color: #3a3a4a;
+            --nav-bg: #2a2a3a; /* 导航栏背景色 */
+            --nav-active: #4a6fa5; /* 导航激活颜色 */
+        }
+
+        .light-mode {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e1e4e8;
+            --hover-color: #edf2f7;
+            --nav-bg: #ffffff;
+            --nav-active: #4a6fa5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--secondary-color);
+        }
+
+        /* 搜索框样式 */
+        .search-container {
+            margin: 30px auto;
+            max-width: 600px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 50px 15px 25px;
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 18px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(74, 111, 165, 0.3);
+            transform: scale(1.02);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus + .search-icon {
+            color: var(--primary-color);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .highlight {
+            background-color: rgba(74, 111, 165, 0.3);
+            color: #ffffff;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-weight: bold;
+        }
+
+        /* 顶部导航栏样式 */
+        .category-nav {
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            background-color: var(--nav-bg);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            padding: 10px 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .category-nav::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge */
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: var(--nav-active);
+            color: white;
+        }
+
+        /* 分类区域样式 - 修改为垂直排列 */
+        .categories {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+        }
+
+        .category {
+            background-color: var(--card-bg);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            scroll-margin-top: 100px; /* 锚点跳转时的顶部边距 */
+            width: 100%; /* 确保占满整行 */
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .category-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .subcategory-header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /* 链接区域样式 - 改为横向排列 */
+        .links {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+
+        /* 上站必备的子分类特殊处理 */
+        #essentials .links {
+            display: block; /* 保持原有的垂直排列 */
+        }
+
+        .link-item {
+            margin-bottom: 12px;
+            list-style: none;
+        }
+
+        .link-item a {
+            display: block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: var(--text-color);
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-item a:hover {
+            background-color: var(--hover-color);
+        }
+
+        .link-item a::before {
+            content: "🔗 ";
+            margin-right: 8px;
+        }
+
+        /* 页脚样式 */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--secondary-color);
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--secondary-color);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .links {
+                grid-template-columns: 1fr; /* 在小屏幕上改为单列 */
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .category-nav {
+                justify-content: flex-start;
+                padding-left: 10px;
+            }
+            
+            .nav-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 搜索结果的淡入效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        [data-visible="true"] {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        /* 搜索时的结果容器样式 */
+        .search-active .category {
+            margin-bottom: 15px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        /* 无搜索结果提示样式 */
+        .no-results-message {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            margin: 30px auto;
+            max-width: 600px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .no-results-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+        
+        .no-results-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .no-results-message p {
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="container">
+        <header>
+            <h1>AI-Web出海个人导航站</h1>
+            <p class="subtitle">收集实用工具和资源的一站式导航</p>
+            
+            <!-- 添加搜索框，使用form元素以支持回车键 -->
+            <form class="search-container" onsubmit="return false;">
+                <input type="text" id="searchBox" class="search-box" placeholder="搜索工具和资源...">
+                <span class="search-icon">🔍</span>
+            </form>
+        </header>
+
+        <!-- 顶部分类导航栏 -->
+        <div class="category-nav">
+            <a href="#ai-tools" class="nav-item">AI编程工具</a>
+            <a href="#keywords" class="nav-item">找需求&关键词</a>
+            <a href="#data-analysis" class="nav-item">数据分析</a>
+            <a href="#essentials" class="nav-item">上站必备</a>
+            <a href="#templates" class="nav-item">上站模版</a>
+            <a href="#news" class="nav-item">热点资讯</a>
+            <a href="#my-sites" class="nav-item">我的网站</a>
+        </div>
+
+        <div id="noResultsMessage" class="no-results-message" style="display: none;">
+            <div class="no-results-icon">🔍</div>
+            <h3>未找到匹配结果</h3>
+            <p>尝试使用其他关键词，或者检查拼写</p>
+        </div>
+
+        <div class="categories">
+            <!-- AI编程工具 (新增) -->
+            <div class="category" id="ai-tools" data-category="AI编程工具">
+                <div class="category-header">AI编程工具</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://claude.ai/new" target="_blank">Claude</a></li>
+                    <li class="link-item"><a href="https://chatgpt.com/" target="_blank">ChatGPT</a></li>
+                    <li class="link-item"><a href="https://www.deepseek.com/" target="_blank">DeepSeek</a></li>
+                    <li class="link-item"><a href="https://www.cursor.com/cn" target="_blank">Cursor</a></li>
+                    <li class="link-item"><a href="https://bolt.new/" target="_blank">Bolt</a></li>
+                    <li class="link-item"><a href="https://www.trae.ai/" target="_blank">Trae AI</a></li>
+                </ul>
+            </div>
+
+            <!-- 找需求&关键词 (更新) -->
+            <div class="category" id="keywords" data-category="找需求&关键词">
+                <div class="category-header">找需求&关键词</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://www.toolify.ai/Best-AI-Tools-revenue" target="_blank">Toolify AI 工具收入排行</a></li>
+                    <li class="link-item"><a href="https://www.searchsuggest.tips/?keyword=" target="_blank">Search Suggest Tips</a></li>
+                    <li class="link-item"><a href="https://theresanaiforthat.com/requests" target="_blank">There's An AI For That</a></li>
+                    <li class="link-item"><a href="https://trends.google.com/trends/explore?geo=SG&hl=en" target="_blank">Google Trends</a></li>
+                    <li class="link-item"><a href="https://keywordtool.io/" target="_blank">Keyword Tool</a></li>
+                    <li class="link-item"><a href="https://github.com/trending" target="_blank">GitHub Trending</a></li>
+                    <li class="link-item"><a href="https://huggingface.co/models?sort=trending" target="_blank">Hugging Face 模型趋势</a></li>
+                    <li class="link-item"><a href="https://www.xiaohu.ai/c/xiaohu-ai?post_login_redirect=https%3A%2F%2Fwww.xiaohu.ai%2F" target="_blank">小互AI</a></li>
+                    <li class="link-item"><a href="https://www.fiverr.com/" target="_blank">Fiverr</a></li>
+                </ul>
+            </div>
+
+            <!-- 数据分析 (替代竞品调研) -->
+            <div class="category" id="data-analysis" data-category="数据分析">
+                <div class="category-header">数据分析</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://semrush.com" target="_blank">Semrush</a></li>
+                    <li class="link-item"><a href="https://www.similarweb.com/" target="_blank">SimilarWeb</a></li>
+                    <li class="link-item"><a href="https://aitdk.com" target="_blank">AITDK</a></li>
+                    <li class="link-item"><a href="https://ahrefs.com/keyword-difficulty" target="_blank">Ahrefs 关键词难度</a></li>
+                    <li class="link-item"><a href="https://ahrefs.com/free-seo-tools" target="_blank">Ahrefs 免费 SEO 工具</a></li>
+                </ul>
+            </div>
+
+            <!-- 上站必备-->
+            <div class="category" id="essentials" data-category="上站必备">
+                <div class="category-header">上站必备</div>
+                
+                <div class="subcategory-header">域名查询</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://leandomainsearch.com/" target="_blank">Lean Domain Search</a></li>
+                    <li class="link-item"><a href="https://query.domains/" target="_blank">Query Domains</a></li>
+                    <li class="link-item"><a href="https://instantdomainsearch.com/?q=" target="_blank">Instant Domain Search</a></li>
+                    <li class="link-item"><a href="https://namebeta.com/" target="_blank">NameBeta</a></li>
+                </ul>
+                
+                <div class="subcategory-header">域名注册</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://porkbun.com" target="_blank">Porkbun</a></li>
+                    <li class="link-item"><a href="https://spaceship.com" target="_blank">Spaceship</a></li>
+                    <li class="link-item"><a href="https://namecheap.com" target="_blank">Namecheap</a></li>
+                    <li class="link-item"><a href="https://free.aliyun.com/" target="_blank">阿里云免费资源</a></li>
+                </ul>
+                
+                <div class="subcategory-header">代码&网站托管</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://github.com" target="_blank">GitHub</a></li>
+                    <li class="link-item"><a href="https://cloudflare.com" target="_blank">Cloudflare</a></li>
+                    <li class="link-item"><a href="https://vercel.com" target="_blank">Vercel</a></li>
+                </ul>
+                
+                <div class="subcategory-header">数据后台</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://search.google.com/search-console" target="_blank">Google Search Console</a></li>
+                    <li class="link-item"><a href="https://analytics.google.com/analytics/web/#/" target="_blank">Google Analytics</a></li>
+                    <li class="link-item"><a href="https://www.bing.com/webmasters/submiturl" target="_blank">Bing 网站提交</a></li>
+                </ul>
+                
+                <div class="subcategory-header">魔法工具</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://wmsxwd-3.men/#/dashboard" target="_blank">魔法工具 1</a></li>
+                    <li class="link-item"><a href="https://7lol.lol/" target="_blank">魔法工具 2</a></li>
+                </ul>
+            </div>
+
+            <!-- 上站模版  -->
+            <div class="category" id="templates" data-category="上站模版">
+                <div class="category-header">上站模版</div>
+                
+                <div class="subcategory-header">GitHub</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://github.com/openRin/Rin" target="_blank">OpenRin 模板</a></li>
+                    <li class="link-item"><a href="https://github.com/ixartz/Next-js-Boilerplate" target="_blank">Next.js Boilerplate</a></li>
+                    <li class="link-item"><a href="https://github.com/6677-ai/tap4-ai-webui" target="_blank">Tap4 AI WebUI</a></li>
+                </ul>
+                
+                <div class="subcategory-header">Vercel</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://vercel.com/templates" target="_blank">Vercel 模板库</a></li>
+                </ul>
+            </div>
+
+            <!-- 热点资讯  -->
+            <div class="category" id="news" data-category="热点资讯">
+                <div class="category-header">热点资讯</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://liberating-doll-b8a.notion.site/Reddit-1a8e8aed91b18021839ecba8b74e530b" target="_blank">Reddit 资讯</a></li>
+                    <li class="link-item"><a href="https://developers.google.com/search/docs/fundamentals/creating-helpful-content?hl=zh-cn" target="_blank">Google 创建有用内容指南</a></li>
+                    <li class="link-item"><a href="https://ahrefs.com/websites#trending" target="_blank">Ahrefs 趋势网站</a></li>
+                    <li class="link-item"><a href="https://docs.google.com/spreadsheets/d/1QOdqq9KbjQj1JZO43vc1pir2rnEEsMUXzTDATrOCn2k/edit?gid=0#gid=0" target="_blank">资源表格 1</a></li>
+                    <li class="link-item"><a href="https://docs.google.com/spreadsheets/d/1eUni44pIURML2VWFFXKzNmm-WKuuam9_ynr5Fo_Q74M/edit?gid=83151001#gid=83151001" target="_blank">资源表格 2</a></li>
+                    <li class="link-item"><a href="https://www.500mrr.com/" target="_blank">500MRR</a></li>
+                    <li class="link-item"><a href="https://news.ycombinator.com/item?id=42373343" target="_blank">Hacker News</a></li>
+                </ul>
+            </div>
+
+            <!-- 我的网站 -->
+            <div class="category" id="my-sites" data-category="我的网站">
+                <div class="category-header">我的网站</div>
+                <ul class="links">
+                    <li class="link-item"><a href="https://monstersurvivors.space/" target="_blank">Monster Survivors</a></li>
+                    <li class="link-item"><a href="https://word-counter-6mp.pages.dev/" target="_blank">Word Counter</a></li>
+                    <li class="link-item"><a href="https://sifanglianxu.pages.dev/" target="_blank">四方连续图生成器</a></li>
+                    <li class="link-item"><a href="https://ai-love-match.pages.dev/" target="_blank">AI Love Match</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+
+    <footer>
+        <p>© 2025 个人导航站 | 收集整理了各类实用工具和资源</p>
+    </footer>
+
+    <script>
+        // 搜索功能增强
+        const searchBox = document.getElementById('searchBox');
+        const categories = document.querySelectorAll('.category');
+        const linkItems = document.querySelectorAll('.link-item');
+        
+        // 确保搜索框存在
+        if (!searchBox) {
+            console.error('搜索框元素未找到！');
+        } else {
+            console.log('搜索框已找到，绑定事件...');
+            
+            // 添加搜索框焦点效果
+            searchBox.addEventListener('focus', function() {
+                this.parentElement.classList.add('active');
+            });
+            
+            searchBox.addEventListener('blur', function() {
+                this.parentElement.classList.remove('active');
+            });
+            
+            // 处理输入事件
+            searchBox.addEventListener('input', performSearch);
+            
+            // 处理回车键事件
+            searchBox.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    performSearch();
+                }
+            });
+        }
+        
+        // 搜索功能实现
+        function performSearch() {
+            const searchTerm = searchBox.value.toLowerCase();
+            console.log('执行搜索:', searchTerm);
+            
+            const container = document.querySelector('.container');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            
+            if (searchTerm === '') {
+                container.classList.remove('search-active');
+                noResultsMessage.style.display = 'none'; // 隐藏无结果提示
+                
+                // 如果搜索框为空，显示所有类别和链接
+                categories.forEach(category => {
+                    category.style.display = 'block';
+                    // 显示所有子元素
+                    const headers = category.querySelectorAll('.category-header, .subcategory-header');
+                    headers.forEach(header => {
+                        // 恢复原始文本内容（移除高亮）
+                        header.innerHTML = header.textContent;
+                        header.style.display = 'block';
+                    });
+                });
+                
+                linkItems.forEach(item => {
+                    const link = item.querySelector('a');
+                    link.innerHTML = link.textContent; // 移除任何高亮
+                    item.style.display = 'block';
+                    item.removeAttribute('data-visible');
+                });
+                
+                // 重置所有导航项的激活状态
+                navItems.forEach(item => item.classList.remove('active'));
+                
+                // 根据当前滚动位置设置正确的激活项
+                updateActiveNavItemByScroll();
+                
+                return;
+            }
+            
+            container.classList.add('search-active');
+            
+            let firstMatchFound = false;
+            let firstMatchElement = null;
+            let totalMatches = 0; // 添加匹配计数
+            
+            // 首先重置所有项的状态
+            linkItems.forEach(item => {
+                item.style.display = 'none';
+                item.removeAttribute('data-visible');
+                const link = item.querySelector('a');
+                link.innerHTML = link.textContent; // 移除任何高亮
+            });
+            
+            // 重置导航栏激活状态
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // 处理分类标题匹配
+            categories.forEach(category => {
+                // 获取分类标题和数据属性
+                const categoryHeader = category.querySelector('.category-header');
+                const categoryText = categoryHeader.textContent.toLowerCase();
+                const categoryData = category.getAttribute('data-category')?.toLowerCase() || '';
+                const categoryId = category.getAttribute('id');
+                
+                // 检查分类标题是否匹配
+                if (categoryText.includes(searchTerm) || categoryData.includes(searchTerm)) {
+                    console.log(`分类标题匹配: ${categoryText}`);
+                    category.style.display = 'block';
+                    
+                    // 激活对应的导航项
+                    activateNavItem(categoryId);
+                    
+                    // 显示该分类下的所有链接
+                    const categoryLinks = category.querySelectorAll('.link-item');
+                    categoryLinks.forEach(item => {
+                        item.style.display = 'block';
+                        item.setAttribute('data-visible', 'true');
+                        totalMatches++;
+                        
+                        // 记录第一个匹配项
+                        if (!firstMatchFound) {
+                            firstMatchFound = true;
+                            firstMatchElement = categoryHeader; // 使用分类标题作为滚动目标
+                        }
+                    });
+                    
+                    // 高亮分类标题中的匹配文本
+                    if (categoryText.includes(searchTerm)) {
+                        const regex = new RegExp(searchTerm, 'gi');
+                        const highlightedText = categoryHeader.textContent.replace(
+                            regex, match => `<span class="highlight">${match}</span>`
+                        );
+                        categoryHeader.innerHTML = highlightedText;
+                    }
+                    
+                    // 显示所有子分类标题
+                    const subcategories = category.querySelectorAll('.subcategory-header');
+                    subcategories.forEach(subheader => {
+                        subheader.style.display = 'block';
+                    });
+                    
+                    return; // 跳过此分类的进一步处理
+                }
+                
+                // 检查子分类标题是否匹配
+                const subcategories = category.querySelectorAll('.subcategory-header');
+                let hasSubcategoryMatch = false;
+                
+                subcategories.forEach(subheader => {
+                    const subheaderText = subheader.textContent.toLowerCase();
+                    
+                    if (subheaderText.includes(searchTerm)) {
+                        console.log(`子分类标题匹配: ${subheaderText}`);
+                        hasSubcategoryMatch = true;
+                        subheader.style.display = 'block';
+                        
+                        // 高亮子分类标题中的匹配文本
+                        const regex = new RegExp(searchTerm, 'gi');
+                        const highlightedText = subheader.textContent.replace(
+                            regex, match => `<span class="highlight">${match}</span>`
+                        );
+                        subheader.innerHTML = highlightedText;
+                        
+                        // 显示该子分类下的所有链接
+                        const subLinks = subheader.nextElementSibling.querySelectorAll('.link-item');
+                        subLinks.forEach(item => {
+                            item.style.display = 'block';
+                            item.setAttribute('data-visible', 'true');
+                            totalMatches++;
+                            
+                            // 记录第一个匹配项
+                            if (!firstMatchFound) {
+                                firstMatchFound = true;
+                                firstMatchElement = subheader; // 使用子分类标题作为滚动目标
+                            }
+                        });
+                    } else {
+                        subheader.style.display = 'none';
+                    }
+                });
+                
+                if (hasSubcategoryMatch) {
+                    category.style.display = 'block';
+                    return; // 跳过此分类的进一步处理
+                }
+                
+                // 处理链接项
+                const categoryLinks = category.querySelectorAll('.link-item');
+                let hasLinkMatch = false;
+                
+                categoryLinks.forEach(item => {
+                    const link = item.querySelector('a');
+                    const originalText = link.textContent;
+                    const linkText = originalText.toLowerCase();
+                    const linkHref = link.href.toLowerCase();
+                    
+                    if (linkText.includes(searchTerm) || linkHref.includes(searchTerm)) {
+                        // 高亮匹配的文本
+                        const regex = new RegExp(searchTerm, 'gi');
+                        const highlightedText = originalText.replace(
+                            regex, match => `<span class="highlight">${match}</span>`
+                        );
+                        link.innerHTML = highlightedText;
+                        
+                        // 显示匹配的项
+                        item.style.display = 'block';
+                        item.setAttribute('data-visible', 'true');
+                        hasLinkMatch = true;
+                        totalMatches++;
+                        
+                        // 记录第一个匹配项用于滚动
+                        if (!firstMatchFound) {
+                            firstMatchFound = true;
+                            firstMatchElement = item;
+                        }
+                        
+                        // 确保父子分类标题可见
+                        const parentSubheader = item.closest('.links').previousElementSibling;
+                        if (parentSubheader && parentSubheader.classList.contains('subcategory-header')) {
+                            parentSubheader.style.display = 'block';
+                        }
+                    }
+                });
+                
+                // 根据链接匹配情况显示或隐藏分类
+                category.style.display = hasLinkMatch ? 'block' : 'none';
+            });
+            
+            // 检查是否有匹配结果
+            if (totalMatches === 0) {
+                // 没有匹配结果，显示提示信息
+                noResultsMessage.style.display = 'block';
+                // 自动滚动到提示信息
+                noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // 有匹配结果，隐藏提示信息
+                noResultsMessage.style.display = 'none';
+                
+                // 自动滚动到第一个匹配结果
+                if (firstMatchElement) {
+                    firstMatchElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        // 添加一个辅助函数来激活导航项
+        function activateNavItem(categoryId) {
+            navItems.forEach(item => {
+                const href = item.getAttribute('href').substring(1);
+                if (href === categoryId) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // 暗黑/明亮模式切换
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', function() {
+            body.classList.toggle('light-mode');
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('light-mode')) {
+                themeToggle.textContent = '🌙';
+            } else {
+                themeToggle.textContent = '☀️';
+            }
+        });
+
+        // 导航栏激活状态
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // 点击导航项时添加激活状态
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 添加一个新函数，根据当前滚动位置更新导航栏激活状态
+        function updateActiveNavItemByScroll() {
+            let current = '';
+            const scrollPosition = window.pageYOffset;
+            
+            // 找出当前视口中最顶部的可见分类
+            categories.forEach(category => {
+                if (category.style.display !== 'none') {
+                    const sectionTop = category.offsetTop;
+                    if (scrollPosition >= (sectionTop - 200)) {
+                        current = category.getAttribute('id');
+                    }
+                }
+            });
+            
+            // 更新导航栏激活状态
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href').substring(1) === current) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // 修改滚动事件处理程序，使用新的函数
+        window.addEventListener('scroll', function() {
+            // 如果处于搜索模式，不更新导航栏状态
+            if (document.querySelector('.container').classList.contains('search-active')) {
+                return;
+            }
+            
+            updateActiveNavItemByScroll();
+        });
+    </script>
+</body>
+</html> 
